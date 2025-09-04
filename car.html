@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Racing - Stage Challenge</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #87CEEB, #98FB98);
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .game-container {
+            background: #333;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        
+        #gameCanvas {
+            border: 3px solid #fff;
+            border-radius: 5px;
+            background: #222;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-top: 15px;
+            color: white;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .stage-info {
+            color: #FFD700;
+        }
+        
+        .instructions {
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+        }
+        
+        #usernameScreen {
+            display: flex;
+        }
+        
+        #stageCompleteScreen, #gameOverScreen, #leaderboardScreen {
+            display: none;
+        }
+        
+        .screen h1 {
+            color: #FF6B6B;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .screen h2 {
+            color: #87CEEB;
+            margin-bottom: 20px;
+        }
+        
+        .stage-description {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            max-width: 350px;
+            text-align: center;
+        }
+        
+        input[type="text"] {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            margin: 10px;
+            text-align: center;
+            background: #fff;
+            color: #333;
+            width: 200px;
+        }
+        
+        input[type="text"]:focus {
+            outline: 2px solid #FF6B6B;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        .next-stage-btn {
+            background: #FFD700;
+            color: #333;
+        }
+        
+        .next-stage-btn:hover {
+            background: #FFC700;
+        }
+        
+        .leaderboard {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            min-width: 300px;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+        
+        .rank {
+            font-weight: bold;
+            color: #FFD700;
+        }
+        
+        .player-name {
+            flex-grow: 1;
+            text-align: left;
+            margin-left: 15px;
+        }
+        
+        .player-score {
+            font-weight: bold;
+            color: #87CEEB;
+        }
+        
+        .current-player {
+            background: rgba(255,107,107,0.3);
+            border-radius: 5px;
+            padding: 8px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #FFD700);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Username Entry Screen -->
+        <div id="usernameScreen" class="screen">
+            <h1>🏎️ Car Racing Challenge</h1>
+            <h2>Enter Your Name</h2>
+            <input type="text" id="usernameInput" placeholder="Your Name" maxlength="15">
+            <button onclick="startGame()">Start Racing!</button>
+            <button onclick="showLeaderboard()">View High Scores</button>
+        </div>
+        
+        <!-- Stage Complete Screen -->
+        <div id="stageCompleteScreen" class="screen">
+            <h1>🎉 Stage Complete!</h1>
+            <h2 id="stageCompleteTitle"></h2>
+            <div id="stageCompleteInfo" class="stage-description"></div>
+            <div id="nextStageDescription" class="stage-description"></div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <button onclick="nextStage()" class="next-stage-btn" id="nextStageBtn">Continue to Next Stage</button>
+            <button onclick="showLeaderboard()">View Scores & Quit</button>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="screen">
+            <h1>Game Over!</h1>
+            <h2 id="gameOverMessage"></h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Stages Completed: <span id="stagesCompleted">0</span>/5</p>
+            <div class="nav-buttons">
+                <button onclick="playAgain()">Play Again</button>
+                <button onclick="showLeaderboard()">High Scores</button>
+                <button onclick="backToStart()">Change Name</button>
+            </div>
+        </div>
+        
+        <!-- Leaderboard Screen -->
+        <div id="leaderboardScreen" class="screen">
+            <h1>🏆 High Scores</h1>
+            <div id="leaderboardList" class="leaderboard">
+                <!-- Leaderboard will be populated here -->
+            </div>
+            <div class="nav-buttons">
+                <button onclick="backToStart()">New Player</button>
+                <button id="playAgainBtn" onclick="playAgain()" style="display:none;">Play Again</button>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div class="game-info">
+            <div>Score: <span id="score">0</span></div>
+            <div class="stage-info">Stage: <span id="currentStage">1</span>/5</div>
+            <div>Player: <span id="currentPlayer"></span></div>
+        </div>
+        
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        
+        <div class="controls">
+            <div class="instructions">
+                Use ← → arrow keys or A/D to move<br>
+                <span id="stageTarget">Survive 30 seconds to advance!</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const currentPlayerElement = document.getElementById('currentPlayer');
+        const currentStageElement = document.getElementById('currentStage');
+        const stageTargetElement = document.getElementById('stageTarget');
+        
+        // Screen elements
+        const usernameScreen = document.getElementById('usernameScreen');
+        const stageCompleteScreen = document.getElementById('stageCompleteScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const leaderboardScreen = document.getElementById('leaderboardScreen');
+        const usernameInput = document.getElementById('usernameInput');
+        const finalScoreElement = document.getElementById('finalScore');
+        const stagesCompletedElement = document.getElementById('stagesCompleted');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        
+        // Game variables
+        let gameRunning = false;
+        let score = 0;
+        let currentStage = 1;
+        let stageStartTime = 0;
+        let lastScoreUpdate = Date.now();
+        let currentUsername = '';
+        let highScores = [];
+        let totalStages = 5;
+        
+        // Stage definitions
+        const stages = {
+            1: {
+                name: "Highway Cruise",
+                description: "Welcome to the highway! Get familiar with the controls.",
+                target: "Survive 30 seconds",
+                duration: 30000, // 30 seconds
+                baseSpeed: 2,
+                obstacleFreq: 0.010,
+                bonusPoints: 50
+            },
+            2: {
+                name: "City Traffic",
+                description: "Traffic is getting heavier in the city.",
+                target: "Survive 35 seconds",
+                duration: 35000, // 35 seconds
+                baseSpeed: 2.5,
+                obstacleFreq: 0.015,
+                bonusPoints: 100
+            },
+            3: {
+                name: "Rush Hour",
+                description: "Peak traffic! Stay alert and focused.",
+                target: "Survive 40 seconds",
+                duration: 40000, // 40 seconds
+                baseSpeed: 3,
+                obstacleFreq: 0.020,
+                bonusPoints: 150
+            },
+            4: {
+                name: "Highway Madness",
+                description: "High-speed chaos on the highway!",
+                target: "Survive 45 seconds",
+                duration: 45000, // 45 seconds
+                baseSpeed: 3.5,
+                obstacleFreq: 0.025,
+                bonusPoints: 200
+            },
+            5: {
+                name: "Ultimate Challenge",
+                description: "The final test! Only the best drivers make it through.",
+                target: "Survive 50 seconds",
+                duration: 50000, // 50 seconds
+                baseSpeed: 4,
+                obstacleFreq: 0.030,
+                bonusPoints: 300
+            }
+        };
+        
+        // Car object
+        const car = {
+            x: 0,
+            y: 0,
+            width: 30,
+            height: 50,
+            speed: 3,
+            velocity: 0,
+            acceleration: 0.8,
+            friction: 0.85,
+            maxSpeed: 3.5
+        };
+        
+        // Game arrays
+        let obstacles = [];
+        let roadMarkings = [];
+        
+        // Initialize high scores
+        function initializeHighScores() {
+            if (highScores.length === 0) {
+                highScores = [
+                    { name: "Speed Master", score: 2500, stages: 5 },
+                    { name: "Road King", score: 2000, stages: 5 },
+                    { name: "Fast Driver", score: 1500, stages: 4 },
+                    { name: "City Racer", score: 1000, stages: 3 },
+                    { name: "Rookie", score: 500, stages: 2 }
+                ];
+            }
+        }
+        
+        // Add score to leaderboard
+        function addToLeaderboard(name, score, stages) {
+            highScores.push({ name: name, score: score, stages: stages });
+            highScores.sort((a, b) => {
+                // Sort by stages completed first, then by score
+                if (a.stages !== b.stages) {
+                    return b.stages - a.stages;
+                }
+                return b.score - a.score;
+            });
+            highScores = highScores.slice(0, 10);
+        }
+        
+        // Display leaderboard
+        function displayLeaderboard(highlightPlayer = null) {
+            leaderboardList.innerHTML = '';
+            
+            if (highScores.length === 0) {
+                leaderboardList.innerHTML = '<p>No scores yet! Be the first to play!</p>';
+                return;
+            }
+            
+            highScores.forEach((entry, index) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                
+                if (highlightPlayer && 
+                    entry.name === highlightPlayer.name && 
+                    entry.score === highlightPlayer.score &&
+                    entry.stages === highlightPlayer.stages) {
+                    item.classList.add('current-player');
+                }
+                
+                const rank = index + 1;
+                let rankIcon = rank.toString();
+                if (rank === 1) rankIcon = '🥇';
+                else if (rank === 2) rankIcon = '🥈';
+                else if (rank === 3) rankIcon = '🥉';
+                
+                const completionStatus = entry.stages === totalStages ? '✅' : `${entry.stages}/${totalStages}`;
+                
+                item.innerHTML = `
+                    <span class="rank">${rankIcon}</span>
+                    <span class="player-name">${entry.name} (${completionStatus})</span>
+                    <span class="player-score">${entry.score}</span>
+                `;
+                
+                leaderboardList.appendChild(item);
+            });
+        }
+        
+        // Start game function
+        function startGame() {
+            const username = usernameInput.value.trim();
+            if (!username) {
+                alert('Please enter your name!');
+                return;
+            }
+            
+            currentUsername = username;
+            currentPlayerElement.textContent = username;
+            
+            // Hide username screen
+            usernameScreen.style.display = 'none';
+            
+            // Initialize game
+            initializeGame();
+            gameLoop();
+        }
+        
+        // Initialize game state
+        function initializeGame() {
+            gameRunning = true;
+            score = 0;
+            currentStage = 1;
+            stageStartTime = Date.now();
+            lastScoreUpdate = Date.now();
+            
+            // Reset car position
+            car.x = canvas.width / 2 - 15;
+            car.y = canvas.height - 80;
+            car.velocity = 0;
+            
+            // Clear obstacles
+            obstacles = [];
+            
+            // Initialize road markings
+            roadMarkings = [];
+            for (let i = 0; i < 8; i++) {
+                roadMarkings.push({
+                    x: canvas.width / 2 - 2,
+                    y: i * 100,
+                    width: 4,
+                    height: 40
+                });
+            }
+            
+            updateStageDisplay();
+            scoreElement.textContent = '0';
+        }
+        
+        // Update stage display
+        function updateStageDisplay() {
+            currentStageElement.textContent = currentStage;
+            const stage = stages[currentStage];
+            stageTargetElement.textContent = stage.target;
+        }
+        
+        // Check if stage is complete
+        function checkStageComplete() {
+            const stage = stages[currentStage];
+            const elapsedTime = Date.now() - stageStartTime;
+            
+            if (elapsedTime >= stage.duration) {
+                stageComplete();
+            }
+        }
+        
+        // Stage complete
+        function stageComplete() {
+            gameRunning = false;
+            
+            // Add stage bonus points
+            const stage = stages[currentStage];
+            score += stage.bonusPoints;
+            
+            if (currentStage >= totalStages) {
+                // Game completed!
+                allStagesComplete();
+            } else {
+                // Show stage complete screen
+                showStageCompleteScreen();
+            }
+        }
+        
+        // Show stage complete screen
+        function showStageCompleteScreen() {
+            const stage = stages[currentStage];
+            const nextStage = stages[currentStage + 1];
+            
+            document.getElementById('stageCompleteTitle').textContent = 
+                `${stage.name} Complete!`;
+            
+            document.getElementById('stageCompleteInfo').innerHTML = `
+                <strong>Stage Bonus: +${stage.bonusPoints} points</strong><br>
+                Current Score: ${score}
+            `;
+            
+            if (nextStage) {
+                document.getElementById('nextStageDescription').innerHTML = `
+                    <strong>Next: ${nextStage.name}</strong><br>
+                    ${nextStage.description}<br>
+                    <em>${nextStage.target}</em>
+                `;
+                
+                document.getElementById('nextStageBtn').textContent = 
+                    `Continue to Stage ${currentStage + 1}`;
+            }
+            
+            // Update progress bar
+            const progress = (currentStage / totalStages) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            stageCompleteScreen.style.display = 'flex';
+        }
+        
+        // Next stage
+        function nextStage() {
+            currentStage++;
+            stageCompleteScreen.style.display = 'none';
+            
+            if (currentStage <= totalStages) {
+                // Reset for next stage
+                stageStartTime = Date.now();
+                lastScoreUpdate = Date.now();
+                obstacles = [];
+                updateStageDisplay();
+                gameRunning = true;
+                gameLoop();
+            } else {
+                allStagesComplete();
+            }
+        }
+        
+        // All stages complete
+        function allStagesComplete() {
+            // Huge completion bonus
+            score += 500;
+            
+            // Add to leaderboard
+            addToLeaderboard(currentUsername, score, totalStages);
+            
+            // Show victory message
+            gameOverMessage.textContent = '🎊 CONGRATULATIONS! All Stages Complete! 🎊';
+            finalScoreElement.textContent = score;
+            stagesCompletedElement.textContent = totalStages;
+            
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Show leaderboard
+        function showLeaderboard() {
+            usernameScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            stageCompleteScreen.style.display = 'none';
+            leaderboardScreen.style.display = 'flex';
+            
+            displayLeaderboard();
+            
+            if (currentUsername) {
+                playAgainBtn.style.display = 'inline-block';
+            } else {
+                playAgainBtn.style.display = 'none';
+            }
+        }
+        
+        // Back to start screen
+        function backToStart() {
+            gameOverScreen.style.display = 'none';
+            leaderboardScreen.style.display = 'none';
+            stageCompleteScreen.style.display = 'none';
+            usernameScreen.style.display = 'flex';
+            currentUsername = '';
+            usernameInput.value = '';
+            usernameInput.focus();
+        }
+        
+        // Play again function
+        function playAgain() {
+            gameOverScreen.style.display = 'none';
+            leaderboardScreen.style.display = 'none';
+            stageCompleteScreen.style.display = 'none';
+            initializeGame();
+            gameLoop();
+        }
+        
+        // Input handling
+        const keys = {};
+        
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            if (e.key === 'Enter' && usernameScreen.style.display !== 'none') {
+                startGame();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Draw car
+        function drawCar() {
+            // Car body
+            ctx.fillStyle = '#FF6B6B';
+            ctx.fillRect(car.x, car.y, car.width, car.height);
+            
+            // Car windows
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(car.x + 5, car.y + 5, car.width - 10, 15);
+            ctx.fillRect(car.x + 5, car.y + 25, car.width - 10, 15);
+            
+            // Car wheels
+            ctx.fillStyle = '#333';
+            ctx.fillRect(car.x - 3, car.y + 10, 6, 8);
+            ctx.fillRect(car.x + car.width - 3, car.y + 10, 6, 8);
+            ctx.fillRect(car.x - 3, car.y + 32, 6, 8);
+            ctx.fillRect(car.x + car.width - 3, car.y + 32, 6, 8);
+        }
+        
+        // Draw obstacles with stage-based colors
+        function drawObstacles() {
+            // Different colors for different stages
+            const stageColors = {
+                1: '#FF4444',
+                2: '#FF6B00',
+                3: '#FF0066',
+                4: '#9900FF',
+                5: '#FF0000'
+            };
+            
+            ctx.fillStyle = stageColors[currentStage] || '#FF4444';
+            obstacles.forEach(obstacle => {
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                
+                // Add some detail to obstacles
+                ctx.fillStyle = '#CC0000';
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 5, obstacle.width - 10, 10);
+                ctx.fillStyle = stageColors[currentStage] || '#FF4444';
+            });
+        }
+        
+        // Draw road
+        function drawRoad() {
+            // Road surface
+            ctx.fillStyle = '#444';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Road edges
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(50, 0, 5, canvas.height);
+            ctx.fillRect(canvas.width - 55, 0, 5, canvas.height);
+            
+            // Road markings
+            ctx.fillStyle = '#FFF';
+            roadMarkings.forEach(marking => {
+                ctx.fillRect(marking.x, marking.y, marking.width, marking.height);
+            });
+        }
+        
+        // Update car position
+        function updateCar() {
+            let targetVelocity = 0;
+            
+            if ((keys['ArrowLeft'] || keys['a'] || keys['A']) && car.x > 60) {
+                targetVelocity = -car.maxSpeed;
+            }
+            if ((keys['ArrowRight'] || keys['d'] || keys['D']) && car.x < canvas.width - car.width - 60) {
+                targetVelocity = car.maxSpeed;
+            }
+            
+            if (targetVelocity !== 0) {
+                if (Math.abs(car.velocity) < Math.abs(targetVelocity)) {
+                    car.velocity += Math.sign(targetVelocity) * car.acceleration;
+                }
+                car.velocity = Math.max(-car.maxSpeed, Math.min(car.maxSpeed, car.velocity));
+            } else {
+                car.velocity *= car.friction;
+                if (Math.abs(car.velocity) < 0.1) {
+                    car.velocity = 0;
+                }
+            }
+            
+            car.x += car.velocity;
+            car.x = Math.max(60, Math.min(canvas.width - car.width - 60, car.x));
+        }
+        
+        // Update obstacles based on current stage
+        function updateObstacles() {
+            const stage = stages[currentStage];
+            const gameSpeed = stage.baseSpeed;
+            
+            // Move existing obstacles
+            obstacles.forEach(obstacle => {
+                obstacle.y += gameSpeed;
+            });
+            
+            // Remove obstacles that are off screen
+            obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height);
+            
+            // Add new obstacles based on stage frequency
+            if (Math.random() < stage.obstacleFreq) {
+                const lanes = [80, 160, 240, 320];
+                const lane = lanes[Math.floor(Math.random() * lanes.length)];
+                obstacles.push({
+                    x: lane,
+                    y: -50,
+                    width: 30,
+                    height: 50
+                });
+            }
+        }
+        
+        // Update road markings
+        function updateRoadMarkings() {
+            const stage = stages[currentStage];
+            const gameSpeed = stage.baseSpeed;
+            
+            roadMarkings.forEach(marking => {
+                marking.y += gameSpeed;
+                if (marking.y > canvas.height) {
+                    marking.y = -40;
+                }
+            });
+        }
+        
+        // Check collisions
+        function checkCollisions() {
+            obstacles.forEach(obstacle => {
+                if (car.x < obstacle.x + obstacle.width &&
+                    car.x + car.width > obstacle.x &&
+                    car.y < obstacle.y + obstacle.height &&
+                    car.y + car.height > obstacle.y) {
+                    gameOver();
+                }
+            });
+        }
+        
+        // Update score
+        function updateScore() {
+            const currentTime = Date.now();
+            
+            // Add points every 2 seconds
+            if (currentTime - lastScoreUpdate >= 2000) {
+                score += 10 * currentStage; // More points in higher stages
+                scoreElement.textContent = score;
+                lastScoreUpdate = currentTime;
+            }
+        }
+        
+        // Game over
+        function gameOver() {
+            gameRunning = false;
+            finalScoreElement.textContent = score;
+            stagesCompletedElement.textContent = currentStage - 1;
+            
+            // Add to leaderboard
+            addToLeaderboard(currentUsername, score, currentStage - 1);
+            
+            // Determine message based on stages completed
+            const completedStages = currentStage - 1;
+            if (completedStages === 0) {
+                gameOverMessage.textContent = 'Keep practicing! You can do better!';
+            } else if (completedStages === 1) {
+                gameOverMessage.textContent = 'Good start! Try to reach stage 2!';
+            } else if (completedStages === 2) {
+                gameOverMessage.textContent = 'Nice progress! Halfway there!';
+            } else if (completedStages === 3) {
+                gameOverMessage.textContent = 'Excellent! Almost conquered the road!';
+            } else if (completedStages === 4) {
+                gameOverMessage.textContent = 'So close! One more stage to victory!';
+            }
+            
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // Check if stage is complete
+            checkStageComplete();
+            
+            if (!gameRunning) return; // Stage might have completed
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw everything
+            drawRoad();
+            drawCar();
+            drawObstacles();
+            
+            // Update game state
+            updateCar();
+            updateObstacles();
+            updateRoadMarkings();
+            updateScore();
+            checkCollisions();
+            
+            // Continue the game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize the game
+        function init() {
+            initializeHighScores();
+            usernameInput.focus();
+        }
+        
+        // Start when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
